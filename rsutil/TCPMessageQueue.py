@@ -26,13 +26,17 @@ class TCPMessageQueue(threading.Thread):
         self._server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server.connect((host, port))
 
+        self._running = False
+
     def run(self):
+        self._running = True
+
         length = None
         buffer = ""
 
-        while True:
+        while self._running:
             if self.encoding is None:
-                data = self._server.recv(self.buffer_size)
+                data = self._server.recv(self.buffer_size).decode()
             else:
                 data = self._server.recv(self.buffer_size).decode(self.encoding)
             if not data:
@@ -56,10 +60,10 @@ class TCPMessageQueue(threading.Thread):
                 if self.queue_overflow_remove_oldest and self.message_queue.full():
                     self.message_queue.get()
                 self.message_queue.put(message)
+        self._server.close()
 
     def get(self):
         return self.queue.get()
 
-    def close(self):
-        self._server.close()
-
+    def stop(self):
+        self._running = True
