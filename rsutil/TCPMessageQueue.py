@@ -63,7 +63,7 @@ class TCPMessageQueue(threading.Thread):
         self._server.close()
 
     def get(self):
-        return self.queue.get()
+        return self.message_queue.get()
 
     def stop(self):
         self._running = True
