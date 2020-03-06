@@ -48,7 +48,7 @@ class TCPMessageQueue(threading.Thread):
                     if self.delimiter not in buffer:
                         break
                     len_str, delimiter, buffer = buffer.partition(self.delimiter)
-                    length = int(len_str)
+                    length = len(len_str)
 
                 if len(buffer) < length:
                     break
