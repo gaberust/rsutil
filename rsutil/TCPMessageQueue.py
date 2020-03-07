@@ -31,36 +31,28 @@ class TCPMessageQueue(threading.Thread):
     def run(self):
         self._running = True
 
-        length = None
         buffer = ""
-
         while self._running:
-            if self.encoding is None:
-                data = self._server.recv(self.buffer_size).decode()
-            else:
-                data = self._server.recv(self.buffer_size).decode(self.encoding)
+            data = self._server.recv(self.buffer_size)
             if not data:
+                _running = False
                 break
-            buffer += data
+            if self.encoding is None:
+                buffer += data.decode()
+            else:
+                buffer += data.decode(self.encoding)
 
-            while True:
-                if length is None:
-                    if self.delimiter not in buffer:
-                        break
-                    len_str, delimiter, buffer = buffer.partition(self.delimiter)
-                    length = len(len_str)
+            while self.delimiter in buffer:
+                message, delim, new_buffer = buffer.partition(self.delimiter)
+                buffer = new_buffer
+                self._put(message)
 
-                if len(buffer) < length:
-                    break
-
-                message = buffer[:length]
-                buffer = buffer[length:]
-                length = None
-
-                if self.queue_overflow_remove_oldest and self.message_queue.full():
-                    self.message_queue.get()
-                self.message_queue.put(message)
         self._server.close()
+
+    def _put(self, message):
+        if self.message_queue.full() and self.queue_overflow_remove_oldest:
+            self.message_queue.get()
+        self.message_queue.put(message)
 
     def get(self):
         return self.message_queue.get()
