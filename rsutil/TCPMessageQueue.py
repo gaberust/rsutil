@@ -35,7 +35,7 @@ class TCPMessageQueue(threading.Thread):
         while self._running:
             data = self._server.recv(self.buffer_size)
             if not data:
-                _running = False
+                self._running = False
                 break
             if self.encoding is None:
                 buffer += data.decode()
